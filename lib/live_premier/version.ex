@@ -1,4 +1,11 @@
 defmodule LivePremier.Version do
+  @moduledoc """
+  Firmare Version struct
+
+  Contains the digits for the major, minor and patch version. 
+  Also includes a boolan if the firmware is a beta version or not.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

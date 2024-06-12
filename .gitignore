@@ -24,3 +24,4 @@ live_premier-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+.elixir-tools

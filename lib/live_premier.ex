@@ -44,12 +44,12 @@ defmodule LivePremier do
 
   @spec system(__MODULE__.t()) :: {:ok, LivePremier.System.t()} | {:error, Error.t()}
   def system(%__MODULE__{} = live_premier) do
-    with {:ok, %Req.Response{body: body, status: 200}} <-
-           request(live_premier, "/system") |> Req.get() do
-      {:ok,
-       LivePremier.System.changeset(%LivePremier.System{}, body)
-       |> Ecto.Changeset.apply_changes()}
-    else
+    case request(live_premier, "/system") |> Req.get() do
+      {:ok, %Req.Response{body: body, status: 200}} ->
+        {:ok,
+         LivePremier.System.changeset(%LivePremier.System{}, body)
+         |> Ecto.Changeset.apply_changes()}
+
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
     end
@@ -61,10 +61,10 @@ defmodule LivePremier do
 
   @spec reboot(__MODULE__.t()) :: :ok | {:error, Error.t()}
   def reboot(%__MODULE__{} = live_premier) do
-    with {:ok, %Req.Response{status: 200}} <-
-           request(live_premier, "/system/reboot") |> Req.post() do
-      :ok
-    else
+    case request(live_premier, "/system/reboot") |> Req.post() do
+      {:ok, %Req.Response{status: 200}} ->
+        :ok
+
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
     end
@@ -82,10 +82,10 @@ defmodule LivePremier do
   def shutdown(%__MODULE__{} = live_premier, opts \\ []) do
     wol = Keyword.get(opts, :enable_wake_on_lan, false)
 
-    with {:ok, %Req.Response{status: 200}} <-
-           request(live_premier, "/system/shutdown") |> Req.post(json: %{enableWakeOnLan: wol}) do
-      :ok
-    else
+    case request(live_premier, "/system/shutdown") |> Req.post(json: %{enableWakeOnLan: wol}) do
+      {:ok, %Req.Response{status: 200}} ->
+        :ok
+
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
     end
