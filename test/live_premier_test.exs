@@ -21,9 +21,9 @@ defmodule LivePremierTest do
       end
     )
 
-    assert %LivePremier.System{type: "AQL RS4", version: %LivePremier.Version{patch: 23}} =
+    assert {:ok, %LivePremier.System{type: "AQL RS4", version: %LivePremier.Version{patch: 23}}} =
              LivePremier.new("http://example.com")
-             |> LivePremier.get_system()
+             |> LivePremier.system()
   end
 
   test "reboot" do

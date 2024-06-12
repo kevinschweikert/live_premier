@@ -3,6 +3,8 @@ defmodule LivePremier do
   Documentation for `LivePremier`.
   """
 
+  alias LivePremier.Error
+
   @api_path "/api/tpp/v1"
 
   @type t() :: %__MODULE__{
@@ -40,22 +42,32 @@ defmodule LivePremier do
   Returns a LivePremier.System struct from the LivePremier device.
   """
 
-  @spec get_system(__MODULE__.t()) :: LivePremier.System.t()
-  def get_system(%__MODULE__{} = live_premier) do
-    %Req.Response{body: body, status: 200} = request(live_premier, "/system") |> Req.get!()
-
-    LivePremier.System.changeset(%LivePremier.System{}, body)
-    |> Ecto.Changeset.apply_changes()
+  @spec system(__MODULE__.t()) :: {:ok, LivePremier.System.t()} | {:error, Error.t()}
+  def system(%__MODULE__{} = live_premier) do
+    with {:ok, %Req.Response{body: body, status: 200}} <-
+           request(live_premier, "/system") |> Req.get() do
+      {:ok,
+       LivePremier.System.changeset(%LivePremier.System{}, body)
+       |> Ecto.Changeset.apply_changes()}
+    else
+      {:error, %Req.Response{body: body, status: status}} = resp ->
+        {:error, %Error{code: status, message: body, raw: resp}}
+    end
   end
 
   @doc """
   Reboots the LivePremier device
   """
 
-  @spec reboot(__MODULE__.t()) :: :ok
+  @spec reboot(__MODULE__.t()) :: :ok | {:error, Error.t()}
   def reboot(%__MODULE__{} = live_premier) do
-    %Req.Response{status: 200} = request(live_premier, "/system/reboot") |> Req.post!()
-    :ok
+    with {:ok, %Req.Response{status: 200}} <-
+           request(live_premier, "/system/reboot") |> Req.post() do
+      :ok
+    else
+      {:error, %Req.Response{body: body, status: status}} = resp ->
+        {:error, %Error{code: status, message: body, raw: resp}}
+    end
   end
 
   @doc """
@@ -66,18 +78,16 @@ defmodule LivePremier do
   - `:enable_wake_on_lan` - true to shut down the system with the Wakeon-LAN (WoL) feature enabled, false to shut down the system without enabling the Wakeon-LAN feature (default value is false)
   """
 
-  @spec shutdown(__MODULE__.t(), Keyword.t()) :: :ok
+  @spec shutdown(__MODULE__.t(), [{:enable_wake_on_lan, boolean()}]) :: :ok | {:error, Error.t()}
   def shutdown(%__MODULE__{} = live_premier, opts \\ []) do
     wol = Keyword.get(opts, :enable_wake_on_lan, false)
 
-    %Req.Response{status: 200} =
-      request(live_premier, "/system/shutdown")
-      |> Req.post!(
-        json: %{
-          enableWakeOnLan: wol
-        }
-      )
-
-    :ok
+    with {:ok, %Req.Response{status: 200}} <-
+           request(live_premier, "/system/shutdown") |> Req.post(json: %{enableWakeOnLan: wol}) do
+      :ok
+    else
+      {:error, %Req.Response{body: body, status: status}} = resp ->
+        {:error, %Error{code: status, message: body, raw: resp}}
+    end
   end
 end
