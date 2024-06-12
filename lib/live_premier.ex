@@ -24,9 +24,15 @@ defmodule LivePremier do
     %__MODULE__{host: host}
   end
 
+  if Mix.env() == :test do
+    @req_options [plug: {Req.Test, LivePremierStub}]
+  else
+    @req_options []
+  end
+
   defp request(%__MODULE__{host: host}, enpoint) do
     [base_url: Path.join(host, @api_path), url: enpoint]
-    |> Keyword.merge(Application.get_env(:live_premier, :live_premier_req_options, []))
+    |> Keyword.merge(@req_options)
     |> Req.new()
   end
 
