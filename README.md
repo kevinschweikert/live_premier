@@ -1,5 +1,7 @@
 # LivePremier
 
+[![CI](https://github.com/kevinschweikert/live_premier/actions/workflows/elixir.yml/badge.svg)](https://github.com/kevinschweikert/live_premier/actions/workflows/elixir.yml)
+
 An API Wrapper for the Analog Way LivePremier system
 
 More info about the devices at [Analog Way](https://www.analogway.com/emea/products/livepremier-presentation-systems/)
