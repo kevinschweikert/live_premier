@@ -1,13 +1,17 @@
 defmodule LivePremierTest do
   use ExUnit.Case
+  alias LivePremier.Error
+
   doctest LivePremier
 
-  setup {Req.Test, :verify_on_exit!}
+  setup :req_test_verify_on_exit!
+
+  defp req_test_verify_on_exit!(arg), do: Req.Test.verify_on_exit!(arg)
 
   test "system" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{request_path: "/api/tpp/v1/system"} = conn ->
+      fn %{path_info: ["api", "tpp", "v1", "system"]} = conn ->
         Req.Test.json(conn, %{
           type: "AQL RS4",
           label: "AQUILON",
@@ -21,7 +25,13 @@ defmodule LivePremierTest do
       end
     )
 
+    Req.Test.expect(LivePremierStub, &Req.Test.transport_error(&1, :econnrefused))
+
     assert {:ok, %LivePremier.System{type: "AQL RS4", version: %LivePremier.Version{patch: 23}}} =
+             LivePremier.new("http://example.com")
+             |> LivePremier.system()
+
+    assert {:error, %Error{message: :econnrefused}} =
              LivePremier.new("http://example.com")
              |> LivePremier.system()
   end
@@ -29,12 +39,18 @@ defmodule LivePremierTest do
   test "reboot" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{request_path: "/api/tpp/v1/system/reboot"} = conn ->
+      fn %{path_info: ["api", "tpp", "v1", "system", "reboot"]} = conn ->
         Plug.Conn.send_resp(conn, 200, "")
       end
     )
 
+    Req.Test.expect(LivePremierStub, &Req.Test.transport_error(&1, :econnrefused))
+
     assert :ok =
+             LivePremier.new("http://example.com")
+             |> LivePremier.reboot()
+
+    assert {:error, %Error{message: :econnrefused}} =
              LivePremier.new("http://example.com")
              |> LivePremier.reboot()
   end
@@ -42,13 +58,19 @@ defmodule LivePremierTest do
   test "shutdown" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{request_path: "/api/tpp/v1/system/shutdown"} = conn ->
+      fn %{path_info: ["api", "tpp", "v1", "system", "shutdown"]} = conn ->
         {:ok, ~s|{"enableWakeOnLan":false}|, conn} = Plug.Conn.read_body(conn)
         Plug.Conn.send_resp(conn, 200, "")
       end
     )
 
+    Req.Test.expect(LivePremierStub, &Req.Test.transport_error(&1, :econnrefused))
+
     assert :ok =
+             LivePremier.new("http://example.com")
+             |> LivePremier.shutdown()
+
+    assert {:error, %Error{message: :econnrefused}} =
              LivePremier.new("http://example.com")
              |> LivePremier.shutdown()
   end
@@ -56,7 +78,7 @@ defmodule LivePremierTest do
   test "shutdown with wake on lan" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{request_path: "/api/tpp/v1/system/shutdown"} = conn ->
+      fn %{path_info: ["api", "tpp", "v1", "system", "shutdown"]} = conn ->
         {:ok, ~s|{"enableWakeOnLan":true}|, conn} = Plug.Conn.read_body(conn)
         Plug.Conn.send_resp(conn, 200, "")
       end

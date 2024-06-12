@@ -26,6 +26,9 @@ defmodule LivePremier do
     %__MODULE__{host: host}
   end
 
+  @doc false
+  def api_path, do: @api_path
+
   if Mix.env() == :test do
     @req_options [plug: {Req.Test, LivePremierStub}]
   else
@@ -33,7 +36,7 @@ defmodule LivePremier do
   end
 
   defp request(%__MODULE__{host: host}, enpoint) do
-    [base_url: Path.join(host, @api_path), url: enpoint]
+    [base_url: Path.join(host, @api_path), url: enpoint, retry: false]
     |> Keyword.merge(@req_options)
     |> Req.new()
   end
@@ -52,6 +55,9 @@ defmodule LivePremier do
 
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
+
+      {:error, %Req.TransportError{reason: reason}} = resp ->
+        {:error, %Error{message: reason, raw: resp}}
     end
   end
 
@@ -67,6 +73,9 @@ defmodule LivePremier do
 
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
+
+      {:error, %Req.TransportError{reason: reason}} = resp ->
+        {:error, %Error{message: reason, raw: resp}}
     end
   end
 
@@ -88,6 +97,9 @@ defmodule LivePremier do
 
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
+
+      {:error, %Req.TransportError{reason: reason}} = resp ->
+        {:error, %Error{message: reason, raw: resp}}
     end
   end
 end
