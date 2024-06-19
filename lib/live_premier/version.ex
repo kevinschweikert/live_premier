@@ -6,8 +6,7 @@ defmodule LivePremier.Version do
   Also includes a boolan if the firmware is a beta version or not.
   """
 
-  use Ecto.Schema
-  import Ecto.Changeset
+  use LivePremier.Schema, fields: [:major, :minor, :patch, :beta]
 
   @type t() :: %__MODULE__{
           major: integer(),
@@ -22,10 +21,5 @@ defmodule LivePremier.Version do
     field :minor, :integer
     field :patch, :integer
     field :beta, :boolean
-  end
-
-  def changeset(schema, params) do
-    schema
-    |> cast(params, [:major, :minor, :patch, :beta])
   end
 end

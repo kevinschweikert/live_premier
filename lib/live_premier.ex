@@ -49,9 +49,7 @@ defmodule LivePremier do
   def system(%__MODULE__{} = live_premier) do
     case request(live_premier, "/system") |> Req.get() do
       {:ok, %Req.Response{body: body, status: 200}} ->
-        {:ok,
-         LivePremier.System.changeset(%LivePremier.System{}, body)
-         |> Ecto.Changeset.apply_changes()}
+        {:ok, LivePremier.System.new(body)}
 
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}

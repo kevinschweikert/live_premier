@@ -7,8 +7,7 @@ defmodule LivePremier.System do
   - `version` - the Version struct for the current firmware version
   """
 
-  use Ecto.Schema
-  import Ecto.Changeset
+  use LivePremier.Schema, fields: [:type, :label], embeds: [:version]
 
   @type t() :: %__MODULE__{
           type: String.t(),
@@ -21,11 +20,5 @@ defmodule LivePremier.System do
     field :type, :string
     field :label, :string
     embeds_one :version, LivePremier.Version
-  end
-
-  def changeset(schema, params) do
-    schema
-    |> cast(params, [:type, :label])
-    |> cast_embed(:version)
   end
 end
