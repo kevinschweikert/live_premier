@@ -7,7 +7,7 @@ defmodule LivePremier.System do
   - `version` - the Version struct for the current firmware version
   """
 
-  use LivePremier.Schema, fields: [:type, :label], embeds: [:version]
+  use LivePremier.Schema
 
   @type t() :: %__MODULE__{
           type: String.t(),

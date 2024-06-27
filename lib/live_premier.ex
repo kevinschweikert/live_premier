@@ -47,10 +47,11 @@ defmodule LivePremier do
 
   @spec system(__MODULE__.t()) :: {:ok, LivePremier.System.t()} | {:error, Error.t()}
   def system(%__MODULE__{} = live_premier) do
-    case request(live_premier, "/system") |> Req.get() do
-      {:ok, %Req.Response{body: body, status: 200}} ->
-        {:ok, LivePremier.System.new(body)}
-
+    with {:ok, %Req.Response{body: body, status: 200}} <-
+           request(live_premier, "/system") |> Req.get(),
+         {:ok, system} <- LivePremier.System.new(body) do
+      {:ok, system}
+    else
       {:error, %Req.Response{body: body, status: status}} = resp ->
         {:error, %Error{code: status, message: body, raw: resp}}
 
@@ -87,6 +88,7 @@ defmodule LivePremier do
 
   @spec shutdown(__MODULE__.t(), [{:enable_wake_on_lan, boolean()}]) :: :ok | {:error, Error.t()}
   def shutdown(%__MODULE__{} = live_premier, opts \\ []) do
+    opts = Keyword.validate!(opts, [:enable_wake_on_lan])
     wol = Keyword.get(opts, :enable_wake_on_lan, false)
 
     case request(live_premier, "/system/shutdown") |> Req.post(json: %{enableWakeOnLan: wol}) do

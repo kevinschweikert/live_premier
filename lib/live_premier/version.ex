@@ -6,7 +6,7 @@ defmodule LivePremier.Version do
   Also includes a boolan if the firmware is a beta version or not.
   """
 
-  use LivePremier.Schema, fields: [:major, :minor, :patch, :beta]
+  use LivePremier.Schema
 
   @type t() :: %__MODULE__{
           major: integer(),
