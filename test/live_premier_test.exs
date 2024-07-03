@@ -1,5 +1,5 @@
 defmodule LivePremierTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   doctest LivePremier
 
@@ -46,9 +46,10 @@ defmodule LivePremierTest do
     Req.Test.expect(
       LivePremierStub,
       fn %{path_info: ["api", "tpp", "v1", "system", "shutdown"]} = conn ->
+        assert conn.method == "POST"
         assert {:ok, data, conn} = Plug.Conn.read_body(conn)
         assert %{"enableWakeOnLan" => false} = Jason.decode!(data)
-        Plug.Conn.send_resp(conn, 200, "")
+        Plug.Conn.send_resp(conn, 204, "")
       end
     )
 
