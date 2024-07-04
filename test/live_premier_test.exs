@@ -7,10 +7,27 @@ defmodule LivePremierTest do
 
   defp req_test_verify_on_exit!(arg), do: Req.Test.verify_on_exit!(arg)
 
+  defp assert_get(conn), do: assert(conn.method == "GET")
+  defp assert_post(conn), do: assert(conn.method == "POST")
+
+  defp assert_request_path(conn, path) do
+    assert conn.request_path == LivePremier.api_path() <> path
+  end
+
+  defp assert_json(conn, map) do
+    assert {:ok, data, _conn} = Plug.Conn.read_body(conn)
+    assert ^map = Jason.decode!(data)
+  end
+
+  defp no_content(conn), do: Plug.Conn.send_resp(conn, 204, "")
+
   test "system" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "system"]} = conn ->
+      fn conn ->
+        assert_get(conn)
+        assert_request_path(conn, "/system")
+
         Req.Test.json(conn, %{
           type: "AQL RS4",
           label: "AQUILON",
@@ -32,8 +49,10 @@ defmodule LivePremierTest do
   test "reboot" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "system", "reboot"]} = conn ->
-        Plug.Conn.send_resp(conn, 200, "")
+      fn conn ->
+        assert_post(conn)
+        assert_request_path(conn, "/system/reboot")
+        no_content(conn)
       end
     )
 
@@ -45,11 +64,11 @@ defmodule LivePremierTest do
   test "shutdown" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "system", "shutdown"]} = conn ->
-        assert conn.method == "POST"
-        assert {:ok, data, conn} = Plug.Conn.read_body(conn)
-        assert %{"enableWakeOnLan" => false} = Jason.decode!(data)
-        Plug.Conn.send_resp(conn, 204, "")
+      fn conn ->
+        assert_post(conn)
+        assert_request_path(conn, "/system/shutdown")
+        assert_json(conn, %{"enableWakeOnLan" => false})
+        no_content(conn)
       end
     )
 
@@ -61,10 +80,11 @@ defmodule LivePremierTest do
   test "shutdown with wake on lan" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "system", "shutdown"]} = conn ->
-        assert {:ok, data, conn} = Plug.Conn.read_body(conn)
-        assert %{"enableWakeOnLan" => true} = Jason.decode!(data)
-        Plug.Conn.send_resp(conn, 200, "")
+      fn conn ->
+        assert_post(conn)
+        assert_request_path(conn, "/system/shutdown")
+        assert_json(conn, %{"enableWakeOnLan" => true})
+        no_content(conn)
       end
     )
 
@@ -74,12 +94,12 @@ defmodule LivePremierTest do
   end
 
   test "reading screen information" do
-    id = 3
-    id_string = Integer.to_string(id)
-
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "screens", ^id_string]} = conn ->
+      fn conn ->
+        assert_get(conn)
+        assert_request_path(conn, "/screens/1")
+
         Req.Test.json(conn, %{
           isEnabled: true,
           label: "Center"
@@ -93,36 +113,33 @@ defmodule LivePremierTest do
               label: "Center"
             }} =
              LivePremier.new("http://example.com")
-             |> LivePremier.screen(id)
+             |> LivePremier.screen(1)
   end
 
   test "recalling a preset from memory to a single screen" do
-    id = 3
-    id_string = Integer.to_string(id)
-
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "screens", ^id_string, "load-memory"]} = conn ->
-        assert conn.method == "POST"
-        assert {:ok, data, conn} = Plug.Conn.read_body(conn)
-        assert %{"memoryId" => 123, "target" => "program"} = Jason.decode!(data)
-        Plug.Conn.send_resp(conn, 200, "")
+      fn conn ->
+        assert_post(conn)
+        assert_request_path(conn, "/screens/3/load-memory")
+        assert_json(conn, %{"memoryId" => 123, "target" => "program"})
+        no_content(conn)
       end
     )
 
     assert :ok =
              LivePremier.new("http://example.com")
-             |> LivePremier.load_memory(id, memory_id: 123, target: "program")
+             |> LivePremier.load_memory(3, memory_id: 123, target: "program")
   end
 
   test "recalling a preset from master memory" do
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "screens", "load-master-memory"]} = conn ->
-        assert conn.method == "POST"
-        assert {:ok, data, conn} = Plug.Conn.read_body(conn)
-        assert %{"memoryId" => 123, "target" => "program"} = Jason.decode!(data)
-        Plug.Conn.send_resp(conn, 200, "")
+      fn conn ->
+        assert_post(conn)
+        assert_request_path(conn, "/screens/load-master-memory")
+        assert_json(conn, %{"memoryId" => 123, "target" => "program"})
+        no_content(conn)
       end
     )
 
@@ -132,14 +149,11 @@ defmodule LivePremierTest do
   end
 
   test "reading a layer information" do
-    screen_id = 23
-    layer_id = 112
-
     Req.Test.expect(
       LivePremierStub,
-      fn %{path_info: ["api", "tpp", "v1", "screens", "23", "layers", "112"]} =
-           conn ->
-        assert conn.method == "GET"
+      fn conn ->
+        assert_get(conn)
+        assert_request_path(conn, "/screens/23/layers/112")
 
         Req.Test.json(conn, %{
           capacity: 3,
@@ -150,6 +164,6 @@ defmodule LivePremierTest do
 
     assert {:ok, %LivePremier.Layer{capacity: 3, canUseMask: true}} =
              LivePremier.new("http://example.com")
-             |> LivePremier.layer(screen_id, layer_id)
+             |> LivePremier.layer(23, 112)
   end
 end

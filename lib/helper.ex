@@ -2,12 +2,18 @@ defmodule LivePremier.Helper do
   alias LivePremier.Error
 
   @moduledoc false
-  def handle_response({:ok, %Req.Response{body: ""}}) do
+  def handle_response({:ok, %Req.Response{body: "", status: status} = _req})
+      when status >= 200 and status <= 299 do
     :ok
   end
 
-  def handle_response({:ok, %Req.Response{body: body}}) do
+  def handle_response({:ok, %Req.Response{body: body, status: status} = _req})
+      when status >= 200 and status <= 299 do
     {:ok, body}
+  end
+
+  def handle_response({:ok, %Req.Response{body: body, status: status} = resp}) do
+    {:error, %Error{code: status, message: body, raw: resp}}
   end
 
   def handle_response({:error, %Req.Response{body: body, status: status} = resp}) do

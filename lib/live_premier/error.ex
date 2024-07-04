@@ -3,6 +3,7 @@ defmodule LivePremier.Error do
   Encapsulates errors encountered during requests to the LivePremier API.
   """
 
+  @derive {Inspect, only: [:code, :message]}
   defexception [:message, :code, :raw]
 
   @type t :: %__MODULE__{
