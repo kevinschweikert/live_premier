@@ -149,8 +149,9 @@ defmodule LivePremier do
 
     {%{target: "preview"}, types}
     |> cast(params, Map.keys(types))
-    |> validate_number(:memory_id, greater_than_or_equal_to: 0, less_than_or_equal_to: 1000)
     |> validate_required([:memory_id])
+    |> validate_number(:memory_id, greater_than_or_equal_to: 1, less_than_or_equal_to: 1000)
+    |> validate_inclusion(:target, ["preview", "program"])
     |> apply_action(:validate)
     |> handle_validate()
   end
