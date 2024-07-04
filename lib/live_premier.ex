@@ -4,6 +4,7 @@ defmodule LivePremier do
   """
 
   import Ecto.Changeset
+  import LivePremier.Helper
 
   alias LivePremier.Error
 
@@ -61,43 +62,6 @@ defmodule LivePremier do
     live_premier |> request(enpoint) |> Req.post(json: json) |> handle_response()
   end
 
-  defp handle_response({:ok, %Req.Response{body: ""}}) do
-    :ok
-  end
-
-  defp handle_response({:ok, %Req.Response{body: body}}) do
-    {:ok, body}
-  end
-
-  defp handle_response({:error, %Req.Response{body: body, status: status} = resp}) do
-    {:error, %Error{code: status, message: body, raw: resp}}
-  end
-
-  defp handle_response({:error, %Req.TransportError{reason: reason}} = resp) do
-    {:error, %Error{message: reason, raw: resp}}
-  end
-
-  defp handle_validate({:ok, params}) do
-    {:ok, params}
-  end
-
-  defp handle_validate({:error, %Ecto.Changeset{} = changeset}) do
-    {:error, %Error{message: translate_changeset_errors(changeset), raw: changeset}}
-  end
-
-  # INFO: commented out to prevent compiler warnings
-  # defp translate_errors(errors, field) when is_list(errors) do
-  #   for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
-  # end
-
-  defp translate_changeset_errors(changeset) do
-    Enum.map_join(changeset, "\n", fn {key, value} -> "#{key} #{translate_error(value)}" end)
-  end
-
-  defp translate_error({msg, _opts}) do
-    msg
-  end
-
   @doc """
   Returns a LivePremier.System struct from the LivePremier device.
   """
@@ -153,7 +117,7 @@ defmodule LivePremier do
     end
   end
 
-  def screen(_, id) do
+  def screen(%__MODULE__{}, id) do
     {:error, %Error{message: "ID can only be a number between 1 and 24, received #{inspect(id)}"}}
   end
 
@@ -175,7 +139,7 @@ defmodule LivePremier do
     end
   end
 
-  def load_memory(_, id, _) do
+  def load_memory(%__MODULE__{}, id, _) do
     {:error, %Error{message: "ID can only be a number between 1 and 24, received #{inspect(id)}"}}
   end
 

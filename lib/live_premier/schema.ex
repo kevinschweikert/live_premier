@@ -5,6 +5,7 @@ defmodule LivePremier.Schema do
     quote do
       use Ecto.Schema
       import Ecto.Changeset
+      import LivePremier.Helper
 
       def changeset(schema, params) do
         schema
@@ -17,6 +18,7 @@ defmodule LivePremier.Schema do
         |> struct(%{})
         |> changeset(params)
         |> apply_action(:new)
+        |> handle_validate()
       end
 
       defp apply_cast_embeds(changeset, embeds) do
