@@ -114,4 +114,42 @@ defmodule LivePremierTest do
              LivePremier.new("http://example.com")
              |> LivePremier.load_memory(id, memory_id: 123, target: "program")
   end
+
+  test "recalling a preset from master memory" do
+    Req.Test.expect(
+      LivePremierStub,
+      fn %{path_info: ["api", "tpp", "v1", "screens", "load-master-memory"]} = conn ->
+        assert conn.method == "POST"
+        assert {:ok, data, conn} = Plug.Conn.read_body(conn)
+        assert %{"memoryId" => 123, "target" => "program"} = Jason.decode!(data)
+        Plug.Conn.send_resp(conn, 200, "")
+      end
+    )
+
+    assert :ok =
+             LivePremier.new("http://example.com")
+             |> LivePremier.load_master_memory(memory_id: 123, target: "program")
+  end
+
+  test "reading a layer information" do
+    screen_id = 23
+    layer_id = 112
+
+    Req.Test.expect(
+      LivePremierStub,
+      fn %{path_info: ["api", "tpp", "v1", "screens", "23", "layers", "112"]} =
+           conn ->
+        assert conn.method == "GET"
+
+        Req.Test.json(conn, %{
+          capacity: 3,
+          canUseMask: true
+        })
+      end
+    )
+
+    assert {:ok, %LivePremier.Layer{capacity: 3, canUseMask: true}} =
+             LivePremier.new("http://example.com")
+             |> LivePremier.layer(screen_id, layer_id)
+  end
 end

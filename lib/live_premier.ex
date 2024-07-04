@@ -111,7 +111,7 @@ defmodule LivePremier do
   Get the status of a given id. The id has to be a number between 1 and 24
   """
   @spec screen(__MODULE__.t(), integer()) :: {:ok, LivePremier.Screen.t()} | {:error, Error.t()}
-  def screen(%__MODULE__{} = live_premier, id) when id in 1..24//1 do
+  def screen(%__MODULE__{} = live_premier, id) when id in 1..24 do
     with {:ok, body} <- get_request(live_premier, "/screens/#{id}") do
       LivePremier.Screen.new(body)
     end
@@ -130,7 +130,7 @@ defmodule LivePremier do
   - `target` - the destination (“program” or “preview”). Optional, Default is “preview”
   """
   @spec load_memory(__MODULE__.t(), integer(), keyword()) :: :ok | {:error, Error.t()}
-  def load_memory(%__MODULE__{} = live_premier, id, opts) when id in 1..24//1 do
+  def load_memory(%__MODULE__{} = live_premier, id, opts) when id in 1..24 do
     with {:ok, %{memory_id: memory_id, target: target}} <- validate_load_memory(opts) do
       post_request(live_premier, "/screens/#{id}/load-memory", %{
         memoryId: memory_id,
@@ -143,16 +143,63 @@ defmodule LivePremier do
     {:error, %Error{message: "ID can only be a number between 1 and 24, received #{inspect(id)}"}}
   end
 
-  defp validate_load_memory(opts) do
+  @doc """
+  Recalling a master preset from memory
+
+  Options:
+
+  - `memory_id` - the memory index (from 1 to 500), required
+  - `target` - the destination (“program” or “preview”). Optional, Default is “preview”
+  """
+  @spec load_master_memory(__MODULE__.t(), keyword()) :: :ok | {:error, Error.t()}
+  def load_master_memory(%__MODULE__{} = live_premier, opts) do
+    with {:ok, %{memory_id: memory_id, target: target}} <- validate_load_memory(opts, 500) do
+      post_request(live_premier, "/screens/load-master-memory", %{
+        memoryId: memory_id,
+        target: target
+      })
+    end
+  end
+
+  defp validate_load_memory(opts, max_memory_slots \\ 1000) do
     types = %{memory_id: :integer, target: :string}
     params = Enum.into(opts, %{})
 
     {%{target: "preview"}, types}
     |> cast(params, Map.keys(types))
     |> validate_required([:memory_id])
-    |> validate_number(:memory_id, greater_than_or_equal_to: 1, less_than_or_equal_to: 1000)
+    |> validate_number(:memory_id,
+      greater_than_or_equal_to: 1,
+      less_than_or_equal_to: max_memory_slots
+    )
     |> validate_inclusion(:target, ["preview", "program"])
     |> apply_action(:validate)
     |> handle_validate()
+  end
+
+  @doc """
+  Reading a layer information
+  """
+  def layer(%__MODULE__{} = live_premier, screen_id, layer_id)
+      when screen_id in 1..24 and layer_id in 1..128 do
+    with {:ok, body} <- get_request(live_premier, "/screens/#{screen_id}/layers/#{layer_id}") do
+      LivePremier.Layer.new(body)
+    end
+  end
+
+  def layer(%__MODULE__{}, screen_id, layer_id)
+      when layer_id in 1..128 do
+    {:error,
+     %Error{
+       message: "Screen ID can only be a number between 1 and 24, received #{inspect(screen_id)}"
+     }}
+  end
+
+  def layer(%__MODULE__{}, screen_id, layer_id)
+      when screen_id in 1..24 do
+    {:error,
+     %Error{
+       message: "Layer ID can only be a number between 1 and 128, received #{inspect(layer_id)}"
+     }}
   end
 end
