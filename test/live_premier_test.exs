@@ -162,8 +162,33 @@ defmodule LivePremierTest do
       end
     )
 
-    assert {:ok, %LivePremier.Layer{capacity: 3, canUseMask: true}} =
+    assert {:ok, %LivePremier.LayerInfo{capacity: 3, canUseMask: true}} =
              LivePremier.new("http://example.com")
-             |> LivePremier.layer(23, 112)
+             |> LivePremier.layer_info(23, 112)
+  end
+
+  test "reading a layer status" do
+    Req.Test.expect(
+      LivePremierStub,
+      fn conn ->
+        assert_get(conn)
+        assert_request_path(conn, "/screens/23/layers/112/presets/preview")
+
+        Req.Test.json(conn, %{
+          status: "open",
+          sourceType: "input",
+          sourceId: 8
+        })
+      end
+    )
+
+    assert {:ok,
+            %LivePremier.LayerStatus{
+              status: :open,
+              sourceType: :input,
+              sourceId: 8
+            }} =
+             LivePremier.new("http://example.com")
+             |> LivePremier.layer_status(23, 112, :preview)
   end
 end

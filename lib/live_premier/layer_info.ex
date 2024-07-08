@@ -1,4 +1,4 @@
-defmodule LivePremier.Layer do
+defmodule LivePremier.LayerInfo do
   use LivePremier.Schema
 
   @moduledoc """

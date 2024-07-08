@@ -180,26 +180,67 @@ defmodule LivePremier do
   @doc """
   Reading a layer information
   """
-  def layer(%__MODULE__{} = live_premier, screen_id, layer_id)
+  def layer_info(%__MODULE__{} = live_premier, screen_id, layer_id)
       when screen_id in 1..24 and layer_id in 1..128 do
     with {:ok, body} <- get_request(live_premier, "/screens/#{screen_id}/layers/#{layer_id}") do
-      LivePremier.Layer.new(body)
+      LivePremier.LayerInfo.new(body)
     end
   end
 
-  def layer(%__MODULE__{}, screen_id, layer_id)
-      when layer_id in 1..128 do
-    {:error,
-     %Error{
-       message: "Screen ID can only be a number between 1 and 24, received #{inspect(screen_id)}"
-     }}
+  def layer_info(%__MODULE__{}, screen_id, layer_id) do
+    cond do
+      screen_id not in 1..24 ->
+        {:error,
+         %Error{
+           message:
+             "Screen ID can only be a number between 1 and 24, received #{inspect(screen_id)}"
+         }}
+
+      layer_id not in 1..128 ->
+        {:error,
+         %Error{
+           message:
+             "Layer ID can only be a number between 1 and 128, received #{inspect(layer_id)}"
+         }}
+    end
   end
 
-  def layer(%__MODULE__{}, screen_id, layer_id)
-      when screen_id in 1..24 do
-    {:error,
-     %Error{
-       message: "Layer ID can only be a number between 1 and 128, received #{inspect(layer_id)}"
-     }}
+  @doc """
+  Reading a layer status
+
+  ## Example
+
+    > LivePremier.new("http://localhost:3000") |> LivePremier.layer_status(2, 3, :preview)
+    %LivePremier.LayerStatus{}
+
+  """
+  def layer_status(%__MODULE__{} = live_premier, screen_id, layer_id, target)
+      when screen_id in 1..24 and layer_id in 1..128 and target in [:preview, :program] do
+    with {:ok, body} <-
+           get_request(live_premier, "/screens/#{screen_id}/layers/#{layer_id}/presets/#{target}") do
+      LivePremier.LayerStatus.new(body)
+    end
+  end
+
+  def layer_status(%__MODULE__{}, screen_id, layer_id, target) do
+    cond do
+      screen_id not in 1..24 ->
+        {:error,
+         %Error{
+           message: "Screen ID can only be a number between 1 and 24, got #{inspect(screen_id)}"
+         }}
+
+      layer_id not in 1..128 ->
+        {:error,
+         %Error{
+           message: "Layer ID can only be a number between 1 and 128, got #{inspect(layer_id)}"
+         }}
+
+      target not in [:preview, :program] ->
+        {:error,
+         %Error{
+           message: "Target can only be \"preview\" or \"program\", got #{inspect(layer_id)}"
+         }}
+    end
   end
 end
