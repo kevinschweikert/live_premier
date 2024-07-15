@@ -51,7 +51,7 @@ defmodule LivePremier.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.11"},
       {:ex_doc, "~> 0.34.0", only: [:dev]},
       {:plug, "~> 1.0", only: [:test]},
