@@ -1,4 +1,4 @@
-defmodule LivePremier.LayerInfo do
+defmodule LivePremier.Screen.LayerInfo do
   use LivePremier.Schema
 
   @moduledoc """
@@ -7,6 +7,10 @@ defmodule LivePremier.LayerInfo do
   - `capacity` - The layer capacity (from 0 to 8)  
   - `canUseMask` - true if the layer can use a mask, false if not
   """
+  @type t() :: %__MODULE__{
+          capacity: integer(),
+          canUseMask: boolean()
+        }
 
   embedded_schema do
     field :capacity, :integer

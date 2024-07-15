@@ -1,4 +1,4 @@
-defmodule LivePremier.Version do
+defmodule LivePremier.System.Version do
   @moduledoc """
   Firmare Version struct
 

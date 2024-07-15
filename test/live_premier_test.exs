@@ -21,7 +21,7 @@ defmodule LivePremierTest do
 
   defp no_content(conn), do: Plug.Conn.send_resp(conn, 204, "")
 
-  test "system" do
+  test "system info" do
     Req.Test.expect(
       LivePremierStub,
       fn conn ->
@@ -41,9 +41,13 @@ defmodule LivePremierTest do
       end
     )
 
-    assert {:ok, %LivePremier.System{type: "AQL RS4", version: %LivePremier.Version{patch: 23}}} =
+    assert {:ok,
+            %LivePremier.System.Info{
+              type: "AQL RS4",
+              version: %LivePremier.System.Version{patch: 23}
+            }} =
              LivePremier.new("http://example.com")
-             |> LivePremier.system()
+             |> LivePremier.system_info()
   end
 
   test "reboot" do
@@ -108,12 +112,12 @@ defmodule LivePremierTest do
     )
 
     assert {:ok,
-            %LivePremier.Screen{
+            %LivePremier.Screen.Info{
               isEnabled: true,
               label: "Center"
             }} =
              LivePremier.new("http://example.com")
-             |> LivePremier.screen(1)
+             |> LivePremier.screen_info(1)
   end
 
   test "recalling a preset from memory to a single screen" do
@@ -162,7 +166,7 @@ defmodule LivePremierTest do
       end
     )
 
-    assert {:ok, %LivePremier.LayerInfo{capacity: 3, canUseMask: true}} =
+    assert {:ok, %LivePremier.Screen.LayerInfo{capacity: 3, canUseMask: true}} =
              LivePremier.new("http://example.com")
              |> LivePremier.layer_info(23, 112)
   end
@@ -183,7 +187,7 @@ defmodule LivePremierTest do
     )
 
     assert {:ok,
-            %LivePremier.LayerStatus{
+            %LivePremier.Screen.LayerStatus{
               status: :open,
               sourceType: :input,
               sourceId: 8

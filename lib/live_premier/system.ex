@@ -1,24 +1,53 @@
 defmodule LivePremier.System do
-  @moduledoc """
-  System Information struct
+  use LivePremier
+  alias LivePremier.System.Info
 
-  - `type` - the type of LivePremier device: ‘AQL RS alpha’, ‘AQL RS1’, ‘AQL RS2’, ‘AQL RS3’, ‘AQL RS4’, ‘AQL RS5’, ‘AQL RS6’, ‘AQL C’, ‘AQL C+’ or ‘AQL CMAX’
-  - `label` - the device label
-  - `version` - the Version struct for the current firmware version
+  @moduledoc """
+  The function for the System commands
   """
 
-  use LivePremier.Schema
+  @doc """
+  Returns a LivePremier.System struct from the LivePremier device.
+  """
 
-  @type t() :: %__MODULE__{
-          type: String.t(),
-          label: String.t(),
-          version: LivePremier.Version.t()
-        }
+  @spec info(LivePremier.t()) :: {:ok, Info.t()} | {:error, Error.t()}
+  def info(%LivePremier{} = live_premier) do
+    with {:ok, body} <- get_request(live_premier, "/system") do
+      Info.new(body)
+    end
+  end
 
-  @primary_key false
-  embedded_schema do
-    field :type, :string
-    field :label, :string
-    embeds_one :version, LivePremier.Version
+  @doc """
+  Reboots the LivePremier device
+  """
+
+  @spec reboot(LivePremier.t()) :: :ok | {:error, Error.t()}
+  def reboot(%LivePremier{} = live_premier) do
+    post_request(live_premier, "/system/reboot")
+  end
+
+  @doc """
+  Shuts down the LivePremier device
+
+  Options:
+
+  - `:enable_wake_on_lan` - true to shut down the system with the Wakeon-LAN (WoL) feature enabled, false to shut down the system without enabling the Wakeon-LAN feature (default value is false)
+  """
+
+  @spec shutdown(LivePremier.t(), [{:enable_wake_on_lan, boolean()}]) :: :ok | {:error, Error.t()}
+  def shutdown(%LivePremier{} = live_premier, opts \\ []) do
+    with {:ok, %{enable_wake_on_lan: wol}} <- validate_shutdown(opts) do
+      post_request(live_premier, "/system/shutdown", %{enableWakeOnLan: wol})
+    end
+  end
+
+  defp validate_shutdown(opts) do
+    types = %{enable_wake_on_lan: :boolean}
+    params = Enum.into(opts, %{})
+
+    {%{enable_wake_on_lan: false}, types}
+    |> cast(params, Map.keys(types))
+    |> apply_action(:validate)
+    |> handle_validate()
   end
 end

@@ -1,4 +1,4 @@
-defmodule LivePremier.LayerStatus do
+defmodule LivePremier.Screen.LayerStatus do
   use LivePremier.Schema
 
   @moduledoc """
@@ -8,6 +8,12 @@ defmodule LivePremier.LayerStatus do
   - `sourceType` - the type of source: "none", "color", "input", "image" or "screen"
   - `sourceId` - the source number
   """
+
+  @type t() :: %__MODULE__{
+          status: atom(),
+          sourceType: atom(),
+          sourceId: integer()
+        }
 
   embedded_schema do
     field :status, Ecto.Enum,

@@ -7,12 +7,20 @@ defmodule LivePremier.Schema do
       import Ecto.Changeset
       import LivePremier.Helper
 
+      @doc """
+      Creates a new changeset for #{__MODULE__ |> to_string() |> String.split(".") |> List.last()}
+      """
+      @spec changeset(__MODULE__.t(), map()) :: Ecto.Changeset.t()
       def changeset(schema, params) do
         schema
         |> cast(params, fields())
         |> apply_cast_embeds(embeds())
       end
 
+      @doc """
+      Creates a new stuct for #{__MODULE__ |> to_string() |> String.split(".") |> List.last()}
+      """
+      @spec new(map()) :: {:ok, __MODULE__.t()} | {:error, LivePremier.Error.t()}
       def new(params) do
         __MODULE__
         |> struct(%{})
