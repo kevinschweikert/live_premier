@@ -53,7 +53,7 @@ defmodule LivePremier.MixProject do
     [
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.11"},
-      {:ex_doc, "~> 0.36.1", only: [:dev]},
+      {:ex_doc, "~> 0.37.1", only: [:dev]},
       {:plug, "~> 1.0", only: [:test]},
       {:req, "~> 0.5"}
     ]
